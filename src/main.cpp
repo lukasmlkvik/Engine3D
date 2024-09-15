@@ -7,6 +7,7 @@
 
 #include "window.hpp"
 #include "shader.hpp"
+#include "mesh.hpp"
 
 int main() {
 
@@ -19,6 +20,16 @@ int main() {
 		glfwTerminate();
 		return -1;
 	}
+
+	Mesh triangle;
+
+	triangle.vertices = {
+        {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}},
+    	{{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}},
+        {{0.0f,  0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}}
+    };
+	triangle.indices = {0,1,2};
+	triangle.init();
 
 	Shader shader;
 	{
@@ -33,6 +44,9 @@ int main() {
 		window.clear();
 
 		shader.bind();
+		
+		triangle.bind();
+		triangle.draw();
 
 		window.draw();
 	}
