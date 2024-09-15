@@ -4,16 +4,15 @@
 #include <glm/glm.hpp>
 #include <iostream>
 
-int main() {
-	
-	GLFWwindow* window;
 
-	if (!glfwInit()) {
-		return -1;
-	}
+#include "window.hpp"
+#include "shader.hpp"
+
+int main() {
+
+	Window::Init();
 	
-	window = glfwCreateWindow(640, 480, "Engine3D", NULL, NULL);
-	glfwMakeContextCurrent(window);
+	Window window(640,480);
 
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
 		std::cout << "Couldn't load opengl" << std::endl;
@@ -21,16 +20,24 @@ int main() {
 		return -1;
 	}
 
-	glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
+	Shader shader;
+	{
+		ShaderModule vertexShader("../../src/shaders/vertex.vert",GL_VERTEX_SHADER);
+		ShaderModule fragmentShader("../../src/shaders/fragment.frag",GL_FRAGMENT_SHADER);
 
-	while (!glfwWindowShouldClose(window)) {
-		glfwPollEvents();
+		shader.init({&vertexShader, &fragmentShader});
+	}
+	while (!window.shouldClose()) {
+		Window::PullEvents();
 
-		glClear(GL_COLOR_BUFFER_BIT);
+		window.clear();
 
-		glfwSwapBuffers(window);
+		shader.bind();
+
+		window.draw();
 	}
 
-	glfwTerminate();
+	Window::Destroy();
+	
 	return 0;
 }
