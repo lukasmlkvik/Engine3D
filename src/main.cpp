@@ -12,6 +12,7 @@
 #include "mesh.hpp"
 #include "camera.hpp"
 #include "cameraController.hpp"
+#include "sphere.hpp"
 
 
 int main() {
@@ -27,6 +28,8 @@ int main() {
 	}
 
 	Mesh triangle;
+	Sphere shpere;
+	shpere.create(10);
 
 	triangle.vertices = {
         {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}},
@@ -83,6 +86,10 @@ int main() {
 	float time = 0.0f;
 	float fps = 0.0f;
 
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
+	glFrontFace(GL_CCW);
+
 	while (!window.shouldClose()) {
 		auto newTime = std::chrono::high_resolution_clock::now();
 		float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
@@ -108,8 +115,8 @@ int main() {
 		camera.setViewYXZ();
 		glUniformMatrix4fv(shaderProjMatId, 1, GL_FALSE, glm::value_ptr(camera.getProjectionView()));
 
-		triangle.bind();
-		triangle.draw();
+		shpere.bind();
+		shpere.draw();
 
 		window.draw();
 	}
