@@ -78,10 +78,24 @@ int main() {
 	auto currentTime = std::chrono::high_resolution_clock::now();
 
 	ui32 shaderProjMatId = glGetUniformLocation(shader.shaderId, "projMat");
+
+	ui32 frameCount = 0;
+	float time = 0.0f;
+	float fps = 0.0f;
+
 	while (!window.shouldClose()) {
 		auto newTime = std::chrono::high_resolution_clock::now();
 		float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
-		auto currentTime = std::chrono::high_resolution_clock::now();
+		currentTime = newTime;
+		frameCount++;
+		time += frameTime;
+		if(time>=.1f){
+			fps = frameCount/time;
+			time = 0.0f;
+			frameCount = 0;
+		}
+
+		window.setTitle("Engine3D fps: " + std::to_string(fps));
 
 		Window::PullEvents();
 
@@ -89,7 +103,7 @@ int main() {
 
 		shader.bind();
 
-		cc.update(frameTime/10000);
+		cc.update(frameTime);
 		camera.setAspect(window.aspectRatio);
 		camera.setViewYXZ();
 		glUniformMatrix4fv(shaderProjMatId, 1, GL_FALSE, glm::value_ptr(camera.getProjectionView()));

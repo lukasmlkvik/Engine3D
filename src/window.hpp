@@ -3,8 +3,6 @@
 #include <GLFW/glfw3.h>
 #include "types.hpp"
 
-#pragma once
-
 #include <map>
 
 class IEvent
