@@ -96,9 +96,11 @@ public:
 	glm::mat4 getView() { return viewMatrix; }
 
 	TransformComponent transform;
+
+	
+	float fovy;
 private:
 	glm::mat4 projectionMatrix{ 1.f };
 	glm::mat4 viewMatrix{ 1.f };
 	float aspect;
-	float fovy;
 };

@@ -11,6 +11,7 @@
 #include "shader.hpp"
 #include "mesh.hpp"
 #include "camera.hpp"
+#include "cameraController.hpp"
 
 
 int main() {
@@ -47,6 +48,32 @@ int main() {
 	camera.setPerspectiveProjection(glm::radians(50.f), 0.75f, 0.1f, 500.f);
 	camera.transform.position = {0,0,-2};
 
+	CameraController cc;
+	cc.camera = &camera;
+
+	window.kc.registerEvent(GLFW_KEY_W, GLFW_PRESS, new EventController<CameraController>(&cc, [](CameraController* c) {c->onForward();}));
+	window.kc.registerEvent(GLFW_KEY_W, GLFW_RELEASE, new EventController<CameraController>(&cc, [](CameraController* c) {c->onForwardStop();}));
+
+	window.kc.registerEvent(GLFW_KEY_S, GLFW_PRESS, new EventController<CameraController>(&cc, [](CameraController* c) {c->onBack();}));
+	window.kc.registerEvent(GLFW_KEY_S, GLFW_RELEASE, new EventController<CameraController>(&cc, [](CameraController* c) {c->onBackStop();}));
+
+	window.kc.registerEvent(GLFW_KEY_D, GLFW_PRESS, new EventController<CameraController>(&cc, [](CameraController* c) {c->onRight();}));
+	window.kc.registerEvent(GLFW_KEY_D, GLFW_RELEASE, new EventController<CameraController>(&cc, [](CameraController* c) {c->onRightStop();}));
+
+	window.kc.registerEvent(GLFW_KEY_A, GLFW_PRESS, new EventController<CameraController>(&cc, [](CameraController* c) {c->onLeft();}));
+	window.kc.registerEvent(GLFW_KEY_A, GLFW_RELEASE, new EventController<CameraController>(&cc, [](CameraController* c) {c->onLeftStop();}));
+
+	window.kc.registerEvent(GLFW_KEY_UP, GLFW_PRESS, new EventController<CameraController>(&cc, [](CameraController* c) {c->onUp();}));
+	window.kc.registerEvent(GLFW_KEY_UP, GLFW_RELEASE, new EventController<CameraController>(&cc, [](CameraController* c) {c->onUpStop();}));
+
+	window.kc.registerEvent(GLFW_KEY_DOWN, GLFW_PRESS, new EventController<CameraController>(&cc, [](CameraController* c) {c->onDown();}));
+	window.kc.registerEvent(GLFW_KEY_DOWN, GLFW_RELEASE, new EventController<CameraController>(&cc, [](CameraController* c) {c->onDownStop();}));
+
+	window.mc.registerEvent(new EventMouseMove<CameraController>(&cc, [](CameraController* c, float x, float y) {c->onTurn(x,y);}));
+
+	window.kc.registerEvent(GLFW_KEY_ESCAPE, GLFW_PRESS, new EventController<Window>(&window, [](Window* w) {w->unLockCursor();}));
+	window.kc.registerEvent(GLFW_KEY_TAB, GLFW_PRESS, new EventController<Window>(&window, [](Window* w) {w->lockCursor();}));
+
 
 	auto currentTime = std::chrono::high_resolution_clock::now();
 
@@ -62,6 +89,7 @@ int main() {
 
 		shader.bind();
 
+		cc.update(frameTime/10000);
 		camera.setViewYXZ();
 		glUniformMatrix4fv(shaderProjMatId, 1, GL_FALSE, glm::value_ptr(camera.getProjectionView()));
 
