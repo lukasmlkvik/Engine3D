@@ -90,6 +90,7 @@ int main() {
 		shader.bind();
 
 		cc.update(frameTime/10000);
+		camera.setAspect(window.aspectRatio);
 		camera.setViewYXZ();
 		glUniformMatrix4fv(shaderProjMatId, 1, GL_FALSE, glm::value_ptr(camera.getProjectionView()));
 

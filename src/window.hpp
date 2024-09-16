@@ -126,6 +126,8 @@ class Window{
     MouseController mc;
     KeyboardController kc;
 
+    float aspectRatio;
+
     static bool Init(){
         return glfwInit();
     }
@@ -137,6 +139,7 @@ class Window{
     }
     
     Window(ui32 width, ui32 height){
+        aspectRatio = float(width) / float(height);
 
         window = glfwCreateWindow(width, height, "Engine3D", NULL, NULL);
         glfwMakeContextCurrent(window);
@@ -146,6 +149,9 @@ class Window{
         glfwSetMouseButtonCallback(window, mouse_button_callback);
         glfwSetCursorPosCallback(window, cursor_position_callback);
         glfwSetKeyCallback(window, key_callback);
+
+        glfwSetFramebufferSizeCallback(window, onResizeCallback);
+
 
     }
 
@@ -173,7 +179,7 @@ class Window{
     void lockCursor() {
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     }
-    
+
     void unLockCursor() {
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     }
@@ -195,4 +201,10 @@ private:
         app->mc.sendCallback(button, action);
     }
     
+    static void onResizeCallback(GLFWwindow* window, int width, int height) {
+        auto app = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
+        glViewport(0, 0, width, height);
+        app->aspectRatio = float(width) / float(height);
+    }
+
 };

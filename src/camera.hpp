@@ -97,7 +97,6 @@ public:
 
 	TransformComponent transform;
 
-	
 	float fovy;
 private:
 	glm::mat4 projectionMatrix{ 1.f };
