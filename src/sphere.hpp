@@ -5,6 +5,7 @@
 
 class Sphere : public Mesh {
     public:
+
     void create(ui32 n){
 
         vertices = std::vector<Vertex>((n+1)*(n+1));
@@ -23,9 +24,9 @@ class Sphere : public Mesh {
             float z = r * glm::sin(theta);
 
             Vertex* vertex = &vertices[i*(n+1)+j];
-            vertex->position.x = x;
-            vertex->position.y = y;
-            vertex->position.z = z;
+            vertex->position.x = x/2;
+            vertex->position.y = y/2;
+            vertex->position.z = z/2;
             vertex->color = {0,0,1};
             vertex->normal = vertex->position;
 

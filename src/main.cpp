@@ -13,6 +13,7 @@
 #include "camera.hpp"
 #include "cameraController.hpp"
 #include "sphere.hpp"
+#include "fluidSimulation.hpp"
 
 
 int main() {
@@ -27,18 +28,6 @@ int main() {
 		return -1;
 	}
 
-	Mesh triangle;
-	Sphere shpere;
-	shpere.create(10);
-
-	triangle.vertices = {
-        {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}},
-    	{{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}},
-        {{0.0f,  0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}}
-    };
-	triangle.indices = {0,1,2};
-	triangle.init();
-
 	Shader shader;
 	{
 		ShaderModule vertexShader("../../src/shaders/vertex.vert",GL_VERTEX_SHADER);
@@ -49,7 +38,7 @@ int main() {
 
 	Camera camera;
 	camera.setPerspectiveProjection(glm::radians(50.f), 0.75f, 0.1f, 500.f);
-	camera.transform.position = {0,0,-2};
+	camera.transform.position = {0,0,-20};
 
 	CameraController cc;
 	cc.camera = &camera;
@@ -81,14 +70,25 @@ int main() {
 	auto currentTime = std::chrono::high_resolution_clock::now();
 
 	ui32 shaderProjMatId = glGetUniformLocation(shader.shaderId, "projMat");
+	Particle::modelTransformID = glGetUniformLocation(shader.shaderId, "modelTransform");
+
+	Sphere sphere;
+	sphere.create(10);
+
+	Particle::mesh = &sphere;
+	Particle::shader = &shader;
 
 	ui32 frameCount = 0;
 	float time = 0.0f;
 	float fps = 0.0f;
 
+	FluidSimulation fluidSimulation;
+
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	glFrontFace(GL_CCW);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
 
 	while (!window.shouldClose()) {
 		auto newTime = std::chrono::high_resolution_clock::now();
@@ -108,15 +108,17 @@ int main() {
 
 		window.clear();
 
-		shader.bind();
+
 
 		cc.update(frameTime);
 		camera.setAspect(window.aspectRatio);
 		camera.setViewYXZ();
+
+		shader.bind();
 		glUniformMatrix4fv(shaderProjMatId, 1, GL_FALSE, glm::value_ptr(camera.getProjectionView()));
 
-		shpere.bind();
-		shpere.draw();
+		fluidSimulation.update(frameTime);
+		fluidSimulation.draw();
 
 		window.draw();
 	}

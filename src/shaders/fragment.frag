@@ -8,7 +8,7 @@ out vec4 screenColor;
 const vec3 ambientColor = vec3(0.1,0.1,0.1);
 
 const vec3 DirectionalLightColor = vec3(1.0,1.0,1.0);
-const vec3 DirectionalLightDir = vec3(1.0,1.0,1.0);
+const vec3 DirectionalLightDir = vec3(1.0,1.0,-1.0);
 
 void main()
 {
