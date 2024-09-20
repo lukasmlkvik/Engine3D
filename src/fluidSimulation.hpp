@@ -7,6 +7,13 @@
 
 const glm::vec3 vec_down = {0,-1,0};
 
+const float REST_DENSITY = 100.0f;  // Hustota v pokoji
+const float GAS_CONSTANT = 100.0f;  // Plynová konštanta pre tlak
+const float MASS = 1.f;            // Hmotnosť častice
+const float VISCOSITY = 100.0f;      // Viskozita
+const float PARTICLE_RADIUS = 1.f;  // Polomer častice
+const float GRAVITY = 9.81f;        // Gravitačná sila
+
 class Particle {
     public:
 
@@ -20,76 +27,77 @@ class Particle {
 
     TransformComponent transform;
     float density; 
+    float pressure;
     glm::vec3 velocity;
     glm::vec3 predictedPos;
 
 
-
-
-    
-    float smoothingRadius = 1.2; 
-    float mass = 1; 
-    float targetDensity = 0.5; 
-    float pressureMultiplier = 10; 
-
-    float smoothingKernel(float dst, float radius){
-        if(dst >= radius) return 0;
-        float volume = glm::pi<float>() * glm::pow(radius, 8) / 4;
-        float value = radius * radius - dst*dst;
-        return value*value*value/volume;
-    }
-
-    float smoothingKernelDerivative(float dst, float radius){
-        if(dst >= radius) return 0;
-        float f = radius * radius - dst * dst;
-        float scale = -24 / ( glm::pi<float>() * glm::pow(radius, 8));
-        return scale * dst * f * f;
-    }
-    
-    float convertDensityToPressure(float dens){
-        float dE = dens - targetDensity;
-        float pressure = dE * pressureMultiplier;
-        return pressure;
-    }
-
-    float calculateDensity(std::vector<Particle>& particles){
-       density = 0;
-        for(auto& p : particles){
-            float dst = glm::length(p.transform.position - predictedPos);
-            float influence = smoothingKernel(dst, smoothingRadius);
-            density += mass * influence;
+    // Kernel funkcia pre hustotu (Poly6 kernel)
+    float kernelPoly6(float r) const {
+        float h = PARTICLE_RADIUS;
+        if (r >= 0 && r <= h) {
+            float x = (h * h - r * r);
+            return (315.0f / (64.0f * glm::pi<float>() * glm::pow(h, 9))) * x * x * x;
+        } else {
+            return 0.0f;
         }
-        return density;
     }
 
-    glm::vec3 calculatePrressureForce(std::vector<Particle>& particles){
-        glm::vec3 pF = {0,0,0};
-        for(auto& p : particles){
-           if(&p == this) continue;
-           glm::vec3 offset = p.transform.position - transform.position;
-           float dst = glm::length(offset);
-           if (dst ==0.f){
-                dst = 1;
-           }
-           glm::vec3 dir = offset/dst;
+    void computeDensitiesAndPressures(std::vector<Particle>& particles) {
+        density = 0.0f;
+            for (const auto& p2 : particles) {
+                float dist = glm::length(transform.position - p2.transform.position);
+                if (dist < PARTICLE_RADIUS) {
+                    density += MASS * kernelPoly6(dist);
+                }
+            }
+            pressure = GAS_CONSTANT * (density - REST_DENSITY);
+        
+    }
 
-           float slope = smoothingKernelDerivative(dst, smoothingRadius);
-           float d = p.density;
-           float sharedPressure = (convertDensityToPressure(density) +convertDensityToPressure(d) )/2 ;
-
-           pF += sharedPressure* dir * slope * mass / density;
+    // Kernel funkcia pre tlak (Spiky kernel)
+    float kernelSpiky(float r) const {
+        float h = PARTICLE_RADIUS;
+        if (r >= 0 && r <= h) {
+            float x = (h - r);
+            return (-45.0f / (glm::pi<float>() * glm::pow(h, 6))) * x * x;
+        } else {
+            return 0.0f;
         }
-        return pF;
     }
-    
-    void applyPressureForce(std::vector<Particle>& particles, float dt){
-        glm::vec3 presureForce = calculatePrressureForce(particles);
-        glm::vec3 presureForceAcc = presureForce / density;
-        velocity += (vec_down* gravity + presureForceAcc) * dt;
+
+    // Kernel funkcia pre viskozitu (Viscosity kernel)
+    float kernelViscosity(float r) const {
+        float h = PARTICLE_RADIUS;
+        if (r >= 0 && r <= h) {
+            return (45.0f / (glm::pi<float>() * glm::pow(h, 6))) * (h - r);
+        } else {
+            return 0.0f;
+        }
     }
-    
-    void predictPosition(float dt){
-        predictedPos = transform.position + velocity / 120.f;
+
+    void computeForces(std::vector<Particle>& particles, float dt) {
+            glm::vec3 pressureForce(0, 0,0);
+            glm::vec3 viscosityForce(0, 0,0);
+            for (const auto& p2 : particles) {
+                if (this == &p2) continue;
+
+                float dist = glm::length(transform.position - p2.transform.position);
+                if (dist < PARTICLE_RADIUS) {
+                    // Tlaková sila
+                    pressureForce = pressureForce - (p2.transform.position - transform.position) * (MASS * (pressure + p2.pressure) / (2 * p2.density) * kernelSpiky(dist));
+
+                    // Viskózna sila
+                    viscosityForce = viscosityForce + (p2.velocity - velocity) * (VISCOSITY * MASS / p2.density * kernelViscosity(dist));
+                }
+            }
+
+            // Výsledná sila
+            glm::vec3 force = pressureForce + viscosityForce + vec_down * GRAVITY;
+
+            // Aplikovanie sily na zrýchlenie
+            velocity = velocity + (force * (dt / density));
+        
     }
 
     void update(float dt){
@@ -125,7 +133,7 @@ class Particle {
 ui32 Particle::modelTransformID = 0;
 Mesh* Particle::mesh = nullptr;
 Shader* Particle::shader = nullptr;
-glm::vec3 Particle::boundarySize = {30,30,30};
+glm::vec3 Particle::boundarySize = {30,30,5};
 float Particle::gravity = 9.f;
 float Particle::colisionDunping = 0.8f;
 
@@ -139,19 +147,17 @@ public:
         for(auto& p : particles){
             p.transform.position.x = c%20 - 10 + rand()*0.0000001f;
             p.transform.position.y = c/20 - 10 + rand()*0.0000001f;
+            p.transform.position.z = rand()*0.0000001f;
             c++;
         }
     }
 
     void update(float dt){
         for(auto& p : particles){
-            p.predictPosition(dt);
+            p.computeDensitiesAndPressures(particles);
         }
         for(auto& p : particles){
-            p.calculateDensity(particles);
-        }
-        for(auto& p : particles){
-            p.applyPressureForce(particles,dt);
+            p.computeForces(particles,dt);
         }
         for(auto& p : particles){
             p.update(dt);
