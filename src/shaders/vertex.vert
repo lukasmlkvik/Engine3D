@@ -9,9 +9,11 @@ out vec3 normalVec;
 
 uniform mat4 projMat;
 
+uniform mat4 modelTransform;
+
 void main()
 {
-    gl_Position = projMat*vec4(vertexPos, 1.0);
-    normalVec =normalize(normal);
+    gl_Position = projMat * modelTransform * vec4(vertexPos, 1.0);
+    normalVec = normalize(mat3(modelTransform)*normal);
     fragmentColor = vertexColor;
 }

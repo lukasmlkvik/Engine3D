@@ -150,7 +150,7 @@ class Window{
 
         glfwSetFramebufferSizeCallback(window, onResizeCallback);
 
-
+    
     }
 
     bool shouldClose() {
