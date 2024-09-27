@@ -32,14 +32,15 @@ int main() {
 	Shader shader;
 	{
 		ShaderModule vertexShader("../../src/shaders/vertex.vert",GL_VERTEX_SHADER);
+		ShaderModule geometryShader("../../src/shaders/geometry.geom",GL_GEOMETRY_SHADER);
 		ShaderModule fragmentShader("../../src/shaders/fragment.frag",GL_FRAGMENT_SHADER);
 
-		shader.init({&vertexShader, &fragmentShader});
+		shader.init({&vertexShader, &geometryShader, &fragmentShader});
 	}
 
 	Camera camera;
-	camera.setPerspectiveProjection(glm::radians(50.f), 0.75f, 1.0e3f, 1.0e30f);
-	camera.transform.position = {0,1.0e9f,-1.0e9f};
+	camera.setPerspectiveProjection(glm::radians(50.f), 0.75f, 0.1f, 1000.0f);
+	camera.transform.position = {0,0,-2.0f};
 
 	CameraController cc;
 	cc.camera = &camera;
@@ -71,13 +72,14 @@ int main() {
 	auto currentTime = std::chrono::high_resolution_clock::now();
 
 	ui32 shaderProjMatId = glGetUniformLocation(shader.shaderId, "projMat");
-	Planet::modelTransformID = glGetUniformLocation(shader.shaderId, "modelTransform");
+
+	TransformComponent transform;
+
+	shader.bind();
+	glUniformMatrix4fv(glGetUniformLocation(shader.shaderId, "modelTransform"), 1, GL_FALSE, glm::value_ptr(transform.mat4()));
 
 	Sphere sphere;
 	sphere.create(10);
-
-	Planet::mesh = &sphere;
-	Planet::shader = &shader;
 
 	ui32 frameCount = 0;
 	float time = 0.0f;
@@ -85,9 +87,9 @@ int main() {
 
 	GravitySimulation fluidSimulation;
 
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
-	glFrontFace(GL_CCW);
+	//glEnable(GL_CULL_FACE);
+	//glCullFace(GL_BACK);
+	//glFrontFace(GL_CCW);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
 
@@ -118,8 +120,8 @@ int main() {
 		shader.bind();
 		glUniformMatrix4fv(shaderProjMatId, 1, GL_FALSE, glm::value_ptr(camera.getProjectionView()));
 
-		fluidSimulation.update(frameTime * 1.0e6f);
-		fluidSimulation.draw();
+		sphere.bind();
+		sphere.draw();
 
 		window.draw();
 	}
