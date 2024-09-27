@@ -14,6 +14,7 @@
 #include "cameraController.hpp"
 #include "sphere.hpp"
 #include "fluidSimulation.hpp"
+#include "gravitySimulation.hpp"
 
 
 int main() {
@@ -37,8 +38,8 @@ int main() {
 	}
 
 	Camera camera;
-	camera.setPerspectiveProjection(glm::radians(50.f), 0.75f, 0.1f, 500.f);
-	camera.transform.position = {0,0,-20};
+	camera.setPerspectiveProjection(glm::radians(50.f), 0.75f, 1.0e3f, 1.0e30f);
+	camera.transform.position = {0,1.0e9f,-1.0e9f};
 
 	CameraController cc;
 	cc.camera = &camera;
@@ -70,19 +71,19 @@ int main() {
 	auto currentTime = std::chrono::high_resolution_clock::now();
 
 	ui32 shaderProjMatId = glGetUniformLocation(shader.shaderId, "projMat");
-	Particle::modelTransformID = glGetUniformLocation(shader.shaderId, "modelTransform");
+	Planet::modelTransformID = glGetUniformLocation(shader.shaderId, "modelTransform");
 
 	Sphere sphere;
 	sphere.create(10);
 
-	Particle::mesh = &sphere;
-	Particle::shader = &shader;
+	Planet::mesh = &sphere;
+	Planet::shader = &shader;
 
 	ui32 frameCount = 0;
 	float time = 0.0f;
 	float fps = 0.0f;
 
-	FluidSimulation fluidSimulation;
+	GravitySimulation fluidSimulation;
 
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
@@ -117,7 +118,7 @@ int main() {
 		shader.bind();
 		glUniformMatrix4fv(shaderProjMatId, 1, GL_FALSE, glm::value_ptr(camera.getProjectionView()));
 
-		fluidSimulation.update(frameTime);
+		fluidSimulation.update(frameTime * 1.0e6f);
 		fluidSimulation.draw();
 
 		window.draw();
