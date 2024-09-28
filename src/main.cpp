@@ -93,6 +93,8 @@ int main() {
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
 
+	float geometriPower = 0.f;
+
 	while (!window.shouldClose()) {
 		auto newTime = std::chrono::high_resolution_clock::now();
 		float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
@@ -111,7 +113,10 @@ int main() {
 
 		window.clear();
 
-
+		geometriPower += frameTime;
+		if(geometriPower > 1.f){
+			geometriPower = 0.f;
+		}
 
 		cc.update(frameTime);
 		camera.setAspect(window.aspectRatio);
@@ -119,6 +124,7 @@ int main() {
 
 		shader.bind();
 		glUniformMatrix4fv(shaderProjMatId, 1, GL_FALSE, glm::value_ptr(camera.getProjectionView()));
+		glUniform1f(glGetUniformLocation(shader.shaderId, "geometriPower"), geometriPower);
 
 		sphere.bind();
 		sphere.draw();
